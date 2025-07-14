@@ -1,0 +1,1533 @@
+local UIS = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+local dashing = false
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+	if input.KeyCode == Enum.KeyCode.LeftShift and not dashing then
+		dashing = true
+		local char = player.Character
+		if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+		local hrp = char.HumanoidRootPart
+		local direction = hrp.CFrame.LookVector
+		hrp.Velocity = direction * 100
+
+		wait(0.4)
+		dashing = false
+	end
+end)
+local Players = game:GetService("Players")
+
+Players.PlayerAdded:Connect(function(player)
+	wait(1)
+
+	-- Meyve seviye verileri
+	local fruitFolder = Instance.new("Folder", player)
+	fruitFolder.Name = "FruitStats"
+
+	local fruitLevel = Instance.new("IntValue", fruitFolder)
+	fruitLevel.Name = "Level"
+	fruitLevel.Value = 0
+
+	local fruitXP = Instance.new("IntValue", fruitFolder)
+	fruitXP.Name = "XP"
+	fruitXP.Value = 0
+
+	local function gainXP(amount)
+		fruitXP.Value += amount
+
+		local requiredXP = 50 + (fruitLevel.Value * 2.5) -- XP ihtiyacı seviye arttıkça zorlaşır
+		while fruitXP.Value >= requiredXP do
+			fruitXP.Value -= requiredXP
+			fruitLevel.Value += 1
+			print("Yeni meyve seviyesi:", fruitLevel.Value)
+			requiredXP = 50 + (fruitLevel.Value * 2.5)
+		end
+	end
+
+	-- Simülasyon için test tuşu (gerçekte meyve yeme vs ile çalışır)
+	player.Chatted:Connect(function(msg)
+		if msg == "!fruitxp" then
+			gainXP(20)
+		end
+	end)
+end)
+local UIS = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+
+local function getFruitLevel()
+	local stats = player:FindFirstChild("FruitStats")
+	if not stats then return 0 end
+	local lvl = stats:FindFirstChild("Level")
+	if not lvl then return 0 end
+	return lvl.Value
+end
+
+UIS.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+
+	local lvl = getFruitLevel()
+
+	if input.KeyCode == Enum.KeyCode.Z then
+		if lvl >= 0 then
+			print("Z Gücü çalıştı") -- Buraya Phoenix değil, diğer meyvelerin gücünü eklersin
+		else
+			warn("Z gücü için seviye 0 gerek")
+		end
+
+	elseif input.KeyCode == Enum.KeyCode.X then
+		if lvl >= 50 then
+			print("X Gücü çalıştı")
+		else
+			warn("X gücü için seviye 50 gerek")
+		end
+
+	elseif input.KeyCode == Enum.KeyCode.C then
+		if lvl >= 125 then
+			print("C Gücü çalıştı")
+		else
+			warn("C gücü için seviye 125 gerek")
+		end
+
+	elseif input.KeyCode == Enum.KeyCode.V then
+		if lvl >= 200 then
+			print("V Gücü çalıştı")
+		else
+			warn("V gücü için seviye 200 gerek")
+		end
+
+	elseif input.KeyCode == Enum.KeyCode.F then
+		if lvl >= 70 then
+			print("F Gücü (kanatla uçuş) çalıştı")
+		else
+			warn("F gücü için seviye 70 gerek")
+		end
+	end
+end)
+local FruitSkillLevels = {
+	Phoenix = {
+		Z = 0,
+		X = 50,
+		C = 125,
+		V = 200,
+		F = 70
+	},
+	Light = {
+		Z = 0,
+		X = 30,
+		C = 80,
+		V = 150,
+		F = 0 -- yoksa 0 yap
+	},
+	Flame = {
+		Z = 0,
+		X = 40,
+		C = 100,
+		V = 180,
+		F = 0
+	},
+	Rubber = {
+		Z = 0,
+		X = 25,
+		C = 90,
+		V = 160,
+		F = 0
+	}
+}
+
+return FruitSkillLevels
+local UIS = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+local fruitLevels = require(game:GetService("ReplicatedStorage"):WaitForChild("FruitSkillLevels"))
+
+local function getFruitLevel()
+	local stats = player:FindFirstChild("FruitStats")
+	if not stats then return 0 end
+	return stats:FindFirstChild("Level").Value
+end
+
+local function getCurrentFruit()
+	local fruit = player:FindFirstChild("CurrentFruit")
+	if fruit then
+		return fruit.Value
+	end
+	return "Phoenix" -- default test için
+end
+
+local function isSkillUnlocked(skillKey)
+	local fruitName = getCurrentFruit()
+	local level = getFruitLevel()
+	local fruitData = fruitLevels[fruitName]
+	
+	if fruitData and fruitData[skillKey] ~= nil then
+		return level >= fruitData[skillKey]
+	end
+	return false
+end
+
+UIS.InputBegan:Connect(function(input, gpe)
+	if gpe then return end
+
+	local keyMap = {
+		[Enum.KeyCode.Z] = "Z",
+		[Enum.KeyCode.X] = "X",
+		[Enum.KeyCode.C] = "C",
+		[Enum.KeyCode.V] = "V",
+		[Enum.KeyCode.F] = "F"
+	}
+
+	local skillKey = keyMap[input.KeyCode]
+	if skillKey and isSkillUnlocked(skillKey) then
+		print(skillKey .. " gücü çalıştı.")
+	else
+		if skillKey then
+			warn(skillKey .. " gücü henüz açılmamış.")
+		end
+	end
+end)
+-- Oyuncuya meyve atandığında (ServerScript)
+local fruit = Instance.new("StringValue")
+fruit.Name = "CurrentFruit"
+fruit.Value = "Phoenix"
+fruit.Parent = player
+local FruitSkillLevels = {
+	Phoenix = {
+		Z = 0,
+		X = 50,
+		C = 125,
+		V = 200,
+		F = 70
+	},
+	Light = {
+		Z = 0,
+		X = 60,
+		C = 105,
+		V = 160,
+		F = 25
+	},
+	Flame = {
+		Z = 0,
+		X = 50,
+		C = 90,
+		V = 145,
+		F = 25
+	},
+	Rubber = {
+		Z = 0,
+		X = 55,
+		C = 95,
+		V = 125,
+		F = 20
+	}
+}
+
+return FruitSkillLevels
+if input.KeyCode == Enum.KeyCode.Z then
+	if currentFruit == "Light" and isSkillUnlocked("Z") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+		local ray = Ray.new(hrp.Position, hrp.CFrame.LookVector * 100)
+		local hit, pos = workspace:FindPartOnRay(ray, char)
+
+		local beam = Instance.new("Part")
+		beam.Size = Vector3.new(0.3, 0.3, 5)
+		beam.CFrame = CFrame.new(hrp.Position, pos) * CFrame.new(0, 0, -2.5)
+		beam.Anchored = true
+		beam.BrickColor = BrickColor.new("Institutional white")
+		beam.Material = Enum.Material.Neon
+		beam.Parent = workspace
+		game.Debris:AddItem(beam, 0.5)
+
+		-- Patlama efekti
+		local explosion = Instance.new("Explosion")
+		explosion.Position = pos
+		explosion.BlastRadius = 2
+		explosion.BlastPressure = 0
+		explosion.Parent = workspace
+	end
+end
+if input.KeyCode == Enum.KeyCode.X then
+	if currentFruit == "Light" and isSkillUnlocked("X") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+
+		local effect = Instance.new("Part")
+		effect.Anchored = true
+		effect.Size = Vector3.new(6, 0.2, 6)
+		effect.CFrame = hrp.CFrame * CFrame.new(0, -3, 0)
+		effect.BrickColor = BrickColor.new("New Yeller")
+		effect.Material = Enum.Material.Neon
+		effect.Parent = workspace
+		game.Debris:AddItem(effect, 1)
+
+		-- Yakındaki oyunculara hasar
+		for _, other in ipairs(game.Players:GetPlayers()) do
+			if other ~= player and other.Character and other.Character:FindFirstChild("HumanoidRootPart") then
+				local dist = (other.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+				if dist < 8 then
+					local hum = other.Character:FindFirstChildOfClass("Humanoid")
+					if hum then hum:TakeDamage(15) end
+				end
+			end
+		end
+	end
+end
+local FruitRarity = {
+    Light = "Epic",
+    Flame = "Epic",
+    Rubber = "Epic",
+    Phoenix = "Legendary" -- Güncellendi
+}
+local UIS = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+local mouse = player:GetMouse()
+
+-- Önceden tanımlanmış fonksiyonlar:
+-- getCurrentFruit(), isSkillUnlocked(skillKey) gibi
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+
+	if input.KeyCode == Enum.KeyCode.C then
+		local currentFruit = getCurrentFruit()
+		if currentFruit == "Light" and isSkillUnlocked("C") then
+			local targetPos = mouse.Hit.p
+
+			-- Patlama efekti
+			local explosion = Instance.new("Part")
+			explosion.Anchored = true
+			explosion.Size = Vector3.new(8, 1, 8)
+			explosion.CFrame = CFrame.new(targetPos + Vector3.new(0, 3, 0))
+			explosion.BrickColor = BrickColor.new("Institutional white")
+			explosion.Material = Enum.Material.Neon
+			explosion.Transparency = 0.5
+			explosion.Parent = workspace
+
+			-- Kısa süre sonra sil
+			game.Debris:AddItem(explosion, 1.5)
+
+			-- Yakındaki oyunculara hasar ver (örnek 20 hasar)
+			for _, other in pairs(game.Players:GetPlayers()) do
+				if other ~= player and other.Character and other.Character:FindFirstChild("HumanoidRootPart") then
+					local dist = (other.Character.HumanoidRootPart.Position - targetPos).Magnitude
+					if dist < 10 then
+						local hum = other.Character:FindFirstChildOfClass("Humanoid")
+						if hum then
+							hum:TakeDamage(20)
+						end
+					end
+				end
+			end
+		end
+	end
+end)
+if input.KeyCode == Enum.KeyCode.V then
+	if currentFruit == "Light" and isSkillUnlocked("V") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+		local center = hrp.Position + hrp.CFrame.LookVector * 10
+
+		-- Alan yarat
+		local area = Instance.new("Part")
+		area.Anchored = true
+		area.CanCollide = false
+		area.Size = Vector3.new(20, 1, 20)
+		area.CFrame = CFrame.new(center)
+		area.Transparency = 0.7
+		area.BrickColor = BrickColor.new("Institutional white")
+		area.Material = Enum.Material.Neon
+		area.Parent = workspace
+
+		-- Işık yağdırma efekti (örnek 10 tane küçük ışık parçacığı)
+		for i = 1, 10 do
+			local lightPart = Instance.new("Part")
+			lightPart.Size = Vector3.new(1, 1, 1)
+			lightPart.Anchored = true
+			lightPart.CanCollide = false
+			lightPart.BrickColor = BrickColor.new("Institutional white")
+			lightPart.Material = Enum.Material.Neon
+			local randomPos = center + Vector3.new(math.random(-10,10), math.random(5,15), math.random(-10,10))
+			lightPart.CFrame = CFrame.new(randomPos)
+			lightPart.Parent = workspace
+
+			game.Debris:AddItem(lightPart, 2)
+		end
+
+		-- Alan ve ışıklar 5 saniye sonra kaybolur
+		game.Debris:AddItem(area, 5)
+	end
+end
+if input.KeyCode == Enum.KeyCode.F then
+	if currentFruit == "Light" and isSkillUnlocked("F") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+		local humanoid = char:FindFirstChildOfClass("Humanoid")
+
+		-- Uçma modu başlat
+		local flying = true
+
+		-- Işık formu efekti için basit neon topu
+		local lightBall = Instance.new("Part")
+		lightBall.Size = Vector3.new(3,3,3)
+		lightBall.Shape = Enum.PartType.Ball
+		lightBall.BrickColor = BrickColor.new("Institutional white")
+		lightBall.Material = Enum.Material.Neon
+		lightBall.Anchored = false
+		lightBall.CanCollide = false
+		lightBall.Parent = workspace
+
+		local weld = Instance.new("WeldConstraint")
+		weld.Part0 = hrp
+		weld.Part1 = lightBall
+		weld.Parent = lightBall
+
+		-- Yüksel ve ileri uç
+		local bodyVelocity = Instance.new("BodyVelocity")
+		bodyVelocity.Velocity = hrp.CFrame.LookVector * 80 + Vector3.new(0, 40, 0)
+		bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+		bodyVelocity.Parent = hrp
+
+		wait(3) -- 3 saniye uç
+
+		-- Uçuşu durdur
+		bodyVelocity:Destroy()
+		lightBall:Destroy()
+		flying = false
+	end
+end
+if input.KeyCode == Enum.KeyCode.Z then
+	if currentFruit == "Flame" and isSkillUnlocked("Z") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+
+		local fireBall = Instance.new("Part")
+		fireBall.Size = Vector3.new(1,1,1)
+		fireBall.Shape = Enum.PartType.Ball
+		fireBall.BrickColor = BrickColor.new("Bright orange")
+		fireBall.Material = Enum.Material.Neon
+		fireBall.CFrame = hrp.CFrame * CFrame.new(0,0,-3)
+		fireBall.Anchored = false
+		fireBall.CanCollide = false
+		fireBall.Parent = workspace
+
+		local bv = Instance.new("BodyVelocity")
+		bv.Velocity = hrp.CFrame.LookVector * 100
+		bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+		bv.Parent = fireBall
+
+		game.Debris:AddItem(fireBall, 3)
+
+		-- Çarpma olayını yakalamak için basit Touched event'i
+		fireBall.Touched:Connect(function(hit)
+			if hit and hit.Parent and hit.Parent:FindFirstChildOfClass("Humanoid") and hit.Parent ~= char then
+				hit.Parent.Humanoid:TakeDamage(20)
+				fireBall:Destroy()
+				-- İsteğe bağlı: küçük ateş efekti ekleyebilirsin
+			end
+		end)
+	end
+end
+if input.KeyCode == Enum.KeyCode.X then
+	if currentFruit == "Flame" and isSkillUnlocked("X") then
+		local mouse = player:GetMouse()
+		local pos = mouse.Hit.p
+
+		local fireZone = Instance.new("Part")
+		fireZone.Size = Vector3.new(6,1,6)
+		fireZone.Anchored = true
+		fireZone.CanCollide = false
+		fireZone.BrickColor = BrickColor.new("Bright orange")
+		fireZone.Material = Enum.Material.Neon
+		fireZone.CFrame = CFrame.new(pos + Vector3.new(0,0.5,0))
+		fireZone.Parent = workspace
+
+		local duration = 8
+		local tickInterval = 1
+
+		local connection
+		connection = game:GetService("RunService").Heartbeat:Connect(function(dt)
+			duration = duration - dt
+			if duration <= 0 then
+				connection:Disconnect()
+				fireZone:Destroy()
+			else
+				for _, playerInRange in pairs(game.Players:GetPlayers()) do
+					if playerInRange.Character and playerInRange.Character:FindFirstChild("HumanoidRootPart") then
+						local dist = (playerInRange.Character.HumanoidRootPart.Position - pos).Magnitude
+						if dist < 6 and playerInRange ~= player then
+							-- Zehir gibi hasar (örnek 3 hasar/sn)
+							local hum = playerInRange.Character:FindFirstChildOfClass("Humanoid")
+							if hum then hum:TakeDamage(3 * dt) end
+						end
+					end
+				end
+			end
+		end)
+	end
+end
+if input.KeyCode == Enum.KeyCode.C then
+	if currentFruit == "Flame" and isSkillUnlocked("C") then
+		local char = player.Character
+		local humanoid = char:FindFirstChildOfClass("Humanoid")
+		if not humanoid then return end
+
+		-- Yanma efekti için basit turuncu ışık topu
+		local fireEffect = Instance.new("ParticleEmitter")
+		fireEffect.Texture = "rbxassetid://241594314" -- Ateş partikülü
+		fireEffect.Rate = 50
+		fireEffect.Lifetime = NumberRange.new(1)
+		fireEffect.Speed = NumberRange.new(1)
+		fireEffect.Parent = char.HumanoidRootPart
+
+		-- Durum efekti 12 saniye sürer
+		local duration = 12
+		local elapsed = 0
+
+		-- Geri hasar mekanizması (basit örnek)
+		local function onDamaged(damage, attacker)
+			if attacker and attacker.Character and attacker.Character == char then
+				-- Vurana hasarın yarısını geri ver
+				local hum = attacker.Character:FindFirstChildOfClass("Humanoid")
+				if hum then
+					hum:TakeDamage(damage * 0.5)
+				end
+			end
+		end
+
+		-- Burada hasar alma ve geri hasar sistemini entegre etmek için oyunun hasar sistemine göre ekleme gerekir
+
+		wait(duration)
+
+		fireEffect.Enabled = false
+		fireEffect:Destroy()
+	endif input.KeyCode == Enum.KeyCode.V then
+	if currentFruit == "Flame" and isSkillUnlocked("V") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+
+		local explosion = Instance.new("Explosion")
+		explosion.Position = hrp.Position + hrp.CFrame.LookVector * 5
+		explosion.BlastRadius = 10
+		explosion.BlastPressure = 100000
+		explosion.Parent = workspace
+	end
+end
+if input.KeyCode == Enum.KeyCode.F then
+	if currentFruit == "Flame" and isSkillUnlocked("F") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+		local humanoid = char:FindFirstChildOfClass("Humanoid")
+
+		local flying = true
+
+		-- Ayaklara ateş efekti ekle
+		local fireEffect1 = Instance.new("ParticleEmitter")
+		fireEffect1.Texture = "rbxassetid://241594314"
+		fireEffect1.Rate = 50
+		fireEffect1.Lifetime = NumberRange.new(1)
+		fireEffect1.Speed = NumberRange.new(1)
+		fireEffect1.Parent = char.LeftFoot
+
+		local fireEffect2 = fireEffect1:Clone()
+		fireEffect2.Parent = char.RightFoot
+
+		-- Uçuş için BodyVelocity
+		local bodyVelocity = Instance.new("BodyVelocity")
+		bodyVelocity.Velocity = hrp.CFrame.LookVector * 80 + Vector3.new(0, 40, 0)
+		bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+		bodyVelocity.Parent = hrp
+
+		wait(3)
+
+		-- Efektleri temizle
+		fireEffect1:Destroy()
+		fireEffect2:Destroy()
+		bodyVelocity:Destroy()
+
+		flying = false
+	end
+end
+local SkillCooldowns = {
+	Z = 4,
+	X = 7,
+	C = 9,
+	V = 10,
+	F = 2
+}
+local UIS = game:GetService("UserInputService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+-- Skill cooldown süreleri (saniye)
+local SkillCooldowns = {
+	Z = 4,
+	X = 7,
+	C = 9,
+	V = 10,
+	F = 2
+}
+
+-- Son kullanım zamanları
+local lastUsed = {
+	Z = 0,
+	X = 0,
+	C = 0,
+	V = 0,
+	F = 0
+}
+
+-- Meyve ve yetenek açma sistemi (senin mevcut kodun olacak)
+local function getCurrentFruit()
+	-- Oyuncunun şu anki meyvesini döndürmeli
+	return "Flame" -- test için örnek
+end
+
+local function isSkillUnlocked(skillKey)
+	-- Skill açılma seviyesini ve oyuncu seviyesini kontrol et (senin sistem)
+	return true -- test için örnek
+end
+
+-- Zehir etkilenen oyuncuları takip için tablo
+local poisonedPlayers = {}
+
+-- Zehir hasar sistemini yönet
+local function applyPoison(player, duration)
+	if poisonedPlayers[player] then
+		poisonedPlayers[player].timeLeft = duration -- süreyi yenile
+		return
+	end
+
+	poisonedPlayers[player] = {
+		timeLeft = duration
+	}
+
+	-- RunService ile sürekli hasar ver
+	local connection
+	connection = RunService.Heartbeat:Connect(function(dt)
+		local info = poisonedPlayers[player]
+		if not info then
+			connection:Disconnect()
+			return
+		end
+
+		info.timeLeft = info.timeLeft - dt
+		if info.timeLeft <= 0 then
+			poisonedPlayers[player] = nil
+			connection:Disconnect()
+		else
+			local char = player.Character
+			if char and char:FindFirstChildOfClass("Humanoid") then
+				char.Humanoid:TakeDamage(2 * dt) -- 2 hasar/saniye
+			end
+		end
+	end)
+end
+
+-- Skill'leri tanımla (örnek: Flame X zehirli alan)
+local function performZSkill()
+	local currentFruit = getCurrentFruit()
+	if currentFruit == "Flame" then
+		-- Ateş fırlatma kodu (daha önce yazdığımız gibi)
+	end
+	-- Diğer meyveler için ekle
+end
+
+local function performXSkill()
+	local currentFruit = getCurrentFruit()
+	if currentFruit == "Flame" then
+		-- Zehirli alan oluştur ve applyPoison() uygula
+		local pos = mouse.Hit.p
+
+		local fireZone = Instance.new("Part")
+		fireZone.Size = Vector3.new(6,1,6)
+		fireZone.Anchored = true
+		fireZone.CanCollide = false
+		fireZone.BrickColor = BrickColor.new("Bright orange")
+		fireZone.Material = Enum.Material.Neon
+		fireZone.CFrame = CFrame.new(pos + Vector3.new(0,0.5,0))
+		fireZone.Parent = workspace
+
+		local duration = 10 -- 10 saniye zehir
+
+		-- Zehir alanındaki oyuncuları takip et ve applyPoison çağır
+		local function checkPlayers()
+			for _, plr in pairs(Players:GetPlayers()) do
+				if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+					local dist = (plr.Character.HumanoidRootPart.Position - pos).Magnitude
+					if dist < 6 then
+						applyPoison(plr, duration)
+					end
+				end
+			end
+		end
+
+		local elapsed = 0
+		local connection
+		connection = RunService.Heartbeat:Connect(function(dt)
+			elapsed = elapsed + dt
+			if elapsed > duration then
+				connection:Disconnect()
+				fireZone:Destroy()
+			else
+				checkPlayers()
+			end
+		end)
+	end
+end
+
+-- Diğer skill fonksiyonlarını da buraya ekle (performCSkill, performVSkill, performFSkill)
+-- Örnek için performCSkill, performVSkill, performFSkill fonksiyonlarını doldurman gerekir.
+
+-- Skill ana kontrol fonksiyonu
+local function performSkill(skillKey)
+	if skillKey == "Z" then
+		performZSkill()
+	elseif skillKey == "X" then
+		performXSkill()
+	elseif skillKey == "C" then
+		-- performCSkill()
+	elseif skillKey == "V" then
+		-- performVSkill()
+	elseif skillKey == "F" then
+		-- performFSkill()
+	end
+end
+
+-- Cooldown kontrol fonksiyonu
+local function canUseSkill(skillKey)
+	local now = tick()
+	if now - lastUsed[skillKey] >= SkillCooldowns[skillKey] then
+		return true
+	else
+		return false
+	end
+end
+
+-- Kullanıcı girdisi dinleyici
+UIS.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+
+	local keyMap = {
+		[Enum.KeyCode.Z] = "Z",
+		[Enum.KeyCode.X] = "X",
+		[Enum.KeyCode.C] = "C",
+		[Enum.KeyCode.V] = "V",
+		[Enum.KeyCode.F] = "F"
+	}
+
+	local skillKey = keyMap[input.KeyCode]
+	if skillKey then
+		if canUseSkill(skillKey) and isSkillUnlocked(skillKey) then
+			lastUsed[skillKey] = tick()
+			performSkill(skillKey)
+		else
+			warn(skillKey .. " skill is on cooldown or locked.")
+		end
+	end
+end)
+if input.KeyCode == Enum.KeyCode.Z then
+	if currentFruit == "Rubber" and isSkillUnlocked("Z") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+
+		-- Elleri uzatan animasyon efekti örneği
+		local leftHand = char:FindFirstChild("LeftHand") or char:FindFirstChild("Left Arm")
+		local rightHand = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")
+
+		-- Basit uzatma efekti (örnek: saydam ve uzun kollar)
+		local extendPart = Instance.new("Part")
+		extendPart.Size = Vector3.new(1, 1, 4)
+		extendPart.Anchored = false
+		extendPart.BrickColor = BrickColor.new("Bright yellow")
+		extendPart.Material = Enum.Material.Neon
+		extendPart.CanCollide = false
+		extendPart.CFrame = hrp.CFrame * CFrame.new(0, 0, -2)
+		extendPart.Parent = workspace
+
+		local bv = Instance.new("BodyVelocity")
+		bv.Velocity = hrp.CFrame.LookVector * 50
+		bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+		bv.Parent = extendPart
+
+		game.Debris:AddItem(extendPart, 0.5)
+
+		-- Hasar verme kısmı basit şekilde
+		extendPart.Touched:Connect(function(hit)
+			if hit.Parent and hit.Parent:FindFirstChildOfClass("Humanoid") and hit.Parent ~= char then
+				hit.Parent.Humanoid:TakeDamage(20)
+			end
+		end)
+	end
+end
+if input.KeyCode == Enum.KeyCode.X then
+	if currentFruit == "Rubber" and isSkillUnlocked("X") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+
+		-- Geniş alan etkili vurma
+		local hitBox = Instance.new("Part")
+		hitBox.Size = Vector3.new(6, 4, 4)
+		hitBox.Transparency = 0.5
+		hitBox.Anchored = true
+		hitBox.CanCollide = false
+		hitBox.CFrame = hrp.CFrame * CFrame.new(0, 0, -3)
+		hitBox.BrickColor = BrickColor.new("Bright yellow")
+		hitBox.Material = Enum.Material.Neon
+		hitBox.Parent = workspace
+
+		game.Debris:AddItem(hitBox, 0.5)
+
+		-- Yakındaki oyunculara hasar ve itme uygula
+		for _, other in pairs(game.Players:GetPlayers()) do
+			if other.Character and other.Character:FindFirstChild("HumanoidRootPart") and other ~= player then
+				local dist = (other.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+				if dist < 10 then
+					local hum = other.Character:FindFirstChildOfClass("Humanoid")
+					if hum then
+						hum:TakeDamage(30)
+						-- İtme kuvveti
+						local bodyVelocity = Instance.new("BodyVelocity")
+						bodyVelocity.Velocity = (other.Character.HumanoidRootPart.Position - hrp.Position).Unit * 100 + Vector3.new(0, 50, 0)
+						bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+						bodyVelocity.Parent = other.Character.HumanoidRootPart
+
+						game.Debris:AddItem(bodyVelocity, 0.3)
+					end
+				end
+			end
+		end
+	end
+end
+if input.KeyCode == Enum.KeyCode.C then
+	if currentFruit == "Rubber" and isSkillUnlocked("C") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+
+		-- Dönen saldırı için küçük bir görsel efekt partı
+		local spinPart = Instance.new("Part")
+		spinPart.Size = Vector3.new(5, 5, 5)
+		spinPart.Anchored = true
+		spinPart.CanCollide = false
+		spinPart.Transparency = 0.5
+		spinPart.BrickColor = BrickColor.new("Bright yellow")
+		spinPart.Material = Enum.Material.Neon
+		spinPart.CFrame = hrp.CFrame
+		spinPart.Parent = workspace
+
+		local rotSpeed = 10
+		local duration = 2
+		local elapsed = 0
+
+		local connection
+		connection = game:GetService("RunService").Heartbeat:Connect(function(dt)
+			if elapsed > duration then
+				connection:Disconnect()
+				spinPart:Destroy()
+			else
+				spinPart.CFrame = spinPart.CFrame * CFrame.Angles(0, math.rad(rotSpeed), 0)
+				elapsed = elapsed + dt
+
+				-- Hasar alanlar
+				for _, other in pairs(game.Players:GetPlayers()) do
+					if other.Character and other.Character:FindFirstChild("HumanoidRootPart") and other ~= player then
+						local dist = (other.Character.HumanoidRootPart.Position - hrp.Position).Magnitude
+						if dist < 7 then
+							local hum = other.Character:FindFirstChildOfClass("Humanoid")
+							if hum then
+								hum:TakeDamage(15)
+							end
+						end
+					end
+				end
+			end
+		end)
+	end
+end
+if input.KeyCode == Enum.KeyCode.V then
+	if currentFruit == "Rubber" and isSkillUnlocked("V") then
+		local char = player.Character
+		local humanoid = char:FindFirstChildOfClass("Humanoid")
+
+		-- Pembe duman efekti
+		local smoke = Instance.new("ParticleEmitter")
+		smoke.Color = ColorSequence.new(Color3.new(1, 0.7, 0.7))
+		smoke.LightEmission = 1
+		smoke.Rate = 50
+		smoke.Lifetime = NumberRange.new(1)
+		smoke.Speed = NumberRange.new(2)
+		smoke.Parent = char.HumanoidRootPart
+
+		-- Hasar artışı için örnek (mesela saldırı gücünü 1.5 kat yap)
+		-- Burada oyun mekaniklerine göre değiştirilebilir
+
+		wait(5) -- etkisi 5 saniye sürer
+
+		smoke.Enabled = false
+		smoke:Destroy()
+	end
+end
+if input.KeyCode == Enum.KeyCode.F then
+	if currentFruit == "Rubber" and isSkillUnlocked("F") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+
+		-- Tutunma efekti için ışıklı eller
+		local leftHand = char:FindFirstChild("LeftHand") or char:FindFirstChild("Left Arm")
+		local rightHand = char:FindFirstChild("RightHand") or char:FindFirstChild("Right Arm")
+
+		local gripEffect = Instance.new("ParticleEmitter")
+		gripEffect.Color = ColorSequence.new(Color3.new(1, 1, 0))
+		gripEffect.LightEmission = 1
+		gripEffect.Rate = 100
+		gripEffect.Lifetime = NumberRange.new(0.5)
+		gripEffect.Parent = hrp
+
+		-- Bekle 1 saniye tutunma efekti
+		wait(1)
+
+		-- Fırlatma hareketi (ileri doğru kuvvet uygulama)
+		local bodyVelocity = Instance.new("BodyVelocity")
+		bodyVelocity.Velocity = hrp.CFrame.LookVector * 100 + Vector3.new(0, 20, 0)
+		bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+		bodyVelocity.Parent = hrp
+
+		game.Debris:AddItem(bodyVelocity, 0.3)
+		gripEffect.Enabled = false
+		gripEffect:Destroy()
+	end
+end
+local flightSpeed = 8 -- Phoenix uçuş hızı
+
+local bodyVelocity = Instance.new("BodyVelocity")
+bodyVelocity.Velocity = hrp.CFrame.LookVector * flightSpeed * 10 + Vector3.new(0, flightSpeed * 5, 0)
+bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+bodyVelocity.Parent = hrp
+local flightSpeed = 10 -- Light uçuş hızı
+local flightSpeed = 5 -- Flame uçuş hızı
+
+local bodyVelocity = Instance.new("BodyVelocity")
+bodyVelocity.Velocity = hrp.CFrame.LookVector * flightSpeed * 10 + Vector3.new(0, flightSpeed * 5, 0)
+bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+bodyVelocity.Parent = hrplocal flightSpeed = 5 -- Flame uçuş hızı
+
+if input.KeyCode == Enum.KeyCode.F then
+	if currentFruit == "Rubber" and isSkillUnlocked("F") then
+		local char = player.Character
+		local hrp = char:WaitForChild("HumanoidRootPart")
+
+		-- Fırlatma hareketi için BodyVelocity
+		local throwSpeed = 7
+
+		local bodyVelocity = Instance.new("BodyVelocity")
+		bodyVelocity.Velocity = hrp.CFrame.LookVector * throwSpeed * 10 + Vector3.new(0, 20, 0)
+		bodyVelocity.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+		bodyVelocity.Parent = hrp
+
+		-- 4 saniye boyunca hareket etsin
+		delay(4, function()
+			bodyVelocity:Destroy()
+		end)
+	end
+end
+local maleModel = Instance.new("Model")
+maleModel.Name = "MaleCharacter"
+
+local hrp = Instance.new("Part")
+hrp.Name = "HumanoidRootPart"
+hrp.Size = Vector3.new(2, 2, 1)
+hrp.Position = Vector3.new(0, 5, 0)
+hrp.Anchored = false
+hrp.Parent = maleModel
+
+local torso = Instance.new("Part")
+torso.Name = "Torso"
+torso.Size = Vector3.new(2, 2, 1)
+torso.Position = hrp.Position + Vector3.new(0, 2, 0)
+torso.BrickColor = BrickColor.new("Brown")
+torso.Parent = maleModel
+
+local head = Instance.new("Part")
+head.Name = "Head"
+head.Size = Vector3.new(2, 1, 1)
+head.Position = torso.Position + Vector3.new(0, 1.5, 0)
+head.BrickColor = BrickColor.new("Light yellow")
+head.Parent = maleModel
+
+local humanoid = Instance.new("Humanoid")
+humanoid.Parent = maleModel
+
+-- Basit aksesuar örneği (şapka)
+local hat = Instance.new("Part")
+hat.Size = Vector3.new(2, 1, 2)
+hat.Position = head.Position + Vector3.new(0, 1, 0)
+hat.BrickColor = BrickColor.new("Black")
+hat.Parent = maleModel
+
+-- Weld örneği ile parçaları bağla (basit bağlantı)
+local weld1 = Instance.new("WeldConstraint")
+weld1.Part0 = hrp
+weld1.Part1 = torso
+weld1.Parent = torso
+
+local weld2 = Instance.new("WeldConstraint")
+weld2.Part0 = torso
+weld2.Part1 = head
+weld2.Parent = head
+
+local weld3 = Instance.new("WeldConstraint")
+weld3.Part0 = head
+weld3.Part1 = hat
+weld3.Parent = hat
+
+maleModel.Parent = workspace
+local femaleModel = Instance.new("Model")
+femaleModel.Name = "FemaleCharacter"
+
+local hrp = Instance.new("Part")
+hrp.Name = "HumanoidRootPart"
+hrp.Size = Vector3.new(2, 2, 1)
+hrp.Position = Vector3.new(10, 5, 0)
+hrp.Anchored = false
+hrp.Parent = femaleModel
+
+local torso = Instance.new("Part")
+torso.Name = "Torso"
+torso.Size = Vector3.new(2, 2, 1)
+torso.Position = hrp.Position + Vector3.new(0, 2, 0)
+torso.BrickColor = BrickColor.new("Pink")
+torso.Parent = femaleModel
+
+local head = Instance.new("Part")
+head.Name = "Head"
+head.Size = Vector3.new(2, 1, 1)
+head.Position = torso.Position + Vector3.new(0, 1.5, 0)
+head.BrickColor = BrickColor.new("Light yellow")
+head.Parent = femaleModel
+
+local humanoid = Instance.new("Humanoid")
+humanoid.Parent = femaleModel
+
+-- Basit aksesuar (saç)
+local hair = Instance.new("Part")
+hair.Size = Vector3.new(2.5, 2, 1)
+hair.Position = head.Position + Vector3.new(0, 1, 0)
+hair.BrickColor = BrickColor.new("Bright yellow")
+hair.Parent = femaleModel
+
+local weld1 = Instance.new("WeldConstraint")
+weld1.Part0 = hrp
+weld1.Part1 = torso
+weld1.Parent = torso
+
+local weld2 = Instance.new("WeldConstraint")
+weld2.Part0 = torso
+weld2.Part1 = head
+weld2.Parent = head
+
+local weld3 = Instance.new("WeldConstraint")
+weld3.Part0 = head
+weld3.Part1 = hair
+weld3.Parent = hair
+
+femaleModel.Parent = workspace
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+-- Basit isim giriş GUI'si
+local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 300, 0, 150)
+Frame.Position = UDim2.new(0.5, -150, 0.5, -75)
+Frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+Frame.BorderSizePixel = 0
+
+local TextLabel = Instance.new("TextLabel", Frame)
+TextLabel.Size = UDim2.new(1, 0, 0.5, 0)
+TextLabel.Position = UDim2.new(0, 0, 0, 0)
+TextLabel.Text = "Lütfen adınızı girin:"
+TextLabel.TextColor3 = Color3.new(1,1,1)
+TextLabel.BackgroundTransparency = 1
+TextLabel.Font = Enum.Font.SourceSansBold
+TextLabel.TextSize = 24
+
+local TextBox = Instance.new("TextBox", Frame)
+TextBox.Size = UDim2.new(0.8, 0, 0.3, 0)
+TextBox.Position = UDim2.new(0.1, 0, 0.55, 0)
+TextBox.Text = ""
+TextBox.ClearTextOnFocus = true
+TextBox.Font = Enum.Font.SourceSans
+TextBox.TextSize = 22
+
+local SubmitButton = Instance.new("TextButton", Frame)
+SubmitButton.Size = UDim2.new(0.4, 0, 0.25, 0)
+SubmitButton.Position = UDim2.new(0.3, 0, 0.85, 0)
+SubmitButton.Text = "Onayla"
+SubmitButton.Font = Enum.Font.SourceSansBold
+SubmitButton.TextSize = 22
+SubmitButton.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+SubmitButton.TextColor3 = Color3.new(1,1,1)
+
+local playerName = nil
+
+SubmitButton.MouseButton1Click:Connect(function()
+	local name = TextBox.Text
+	if name ~= "" then
+		playerName = name
+		ScreenGui:Destroy()
+	end
+end)
+
+-- Karakter yüklendiğinde isim etiketini ayarlama
+local function setupNameTag(character)
+	-- BillboardGui oluştur
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "NameTag"
+	billboard.Adornee = character:WaitForChild("Head")
+	billboard.Size = UDim2.new(0, 200, 0, 50)
+	billboard.StudsOffset = Vector3.new(0, 2.5, 0)
+	billboard.AlwaysOnTop = true
+	billboard.Parent = character
+
+	local textLabel = Instance.new("TextLabel")
+	textLabel.Size = UDim2.new(1, 0, 1, 0)
+	textLabel.BackgroundTransparency = 1
+	textLabel.TextColor3 = Color3.new(1, 1, 1)
+	textLabel.TextStrokeTransparency = 0
+	textLabel.Font = Enum.Font.SourceSansBold
+	textLabel.TextSize = 24
+	textLabel.Text = playerName or player.Name
+	textLabel.Parent = billboard
+end
+
+-- Admin olup olmadığını kontrol et
+local function isAdmin(name)
+	return name == "Homunasi"
+end
+
+-- Ölümsüzlük veya admin avantajı ver
+local function giveAdminPowers(character)
+	local humanoid = character:WaitForChild("Humanoid")
+	humanoid.MaxHealth = math.huge
+	humanoid.Health = math.huge
+	-- Diğer admin özelliklerini buraya ekleyebilirsin
+end
+
+-- Karakter yüklendiğinde isim ve admin kontrolü
+player.CharacterAdded:Connect(function(character)
+	-- İsim hazır olana kadar bekle
+	while not playerName do
+		wait()
+	end
+
+	setupNameTag(character)
+
+	if isAdmin(playerName) then
+		giveAdminPowers(character)
+		print("Admin olarak giriş yaptın, Homunasi!")
+	end
+end)
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+local maxHealth = 1000
+local maxEnergy = 500
+
+local currentEnergy = maxEnergy
+local currentHealth = maxHealth
+
+-- Can ve Enerji GUI'si
+local ScreenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+-- Sağ üst köşeye barlar
+local healthBarBg = Instance.new("Frame", ScreenGui)
+healthBarBg.Position = UDim2.new(0.8, 0, 0.05, 0)
+healthBarBg.Size = UDim2.new(0.18, 0, 0.03, 0)
+healthBarBg.BackgroundColor3 = Color3.new(0.3,0,0)
+
+local healthBar = Instance.new("Frame", healthBarBg)
+healthBar.Size = UDim2.new(1, 0, 1, 0)
+healthBar.BackgroundColor3 = Color3.new(1,0,0)
+
+local energyBarBg = Instance.new("Frame", ScreenGui)
+energyBarBg.Position = UDim2.new(0.8, 0, 0.1, 0)
+energyBarBg.Size = UDim2.new(0.18, 0, 0.03, 0)
+energyBarBg.BackgroundColor3 = Color3.new(0,0,0.3)
+
+local energyBar = Instance.new("Frame", energyBarBg)
+energyBar.Size = UDim2.new(1, 0, 1, 0)
+energyBar.BackgroundColor3 = Color3.new(0,0,1)
+
+-- Güncelleme fonksiyonu
+local function updateBars()
+	healthBar.Size = UDim2.new(currentHealth / maxHealth, 0, 1, 0)
+	energyBar.Size = UDim2.new(currentEnergy / maxEnergy, 0, 1, 0)
+end
+
+updateBars()
+
+-- Can ve enerji otomatik dolumu (örnek 1 dakika dolum)
+spawn(function()
+	while true do
+		wait(1)
+		if currentHealth < maxHealth then
+			currentHealth = math.min(currentHealth + maxHealth/60, maxHealth)
+		end
+		if currentEnergy < maxEnergy then
+			currentEnergy = math.min(currentEnergy + maxEnergy/60, maxEnergy)
+		end
+		updateBars()
+	end
+end)
+
+-- Can ve enerji değişim fonksiyonları (örnek)
+local function useEnergy(amount)
+	if currentEnergy >= amount then
+		currentEnergy = currentEnergy - amount
+		updateBars()
+		return true
+	end
+	return false
+end
+
+local function takeDamage(amount)
+	currentHealth = math.max(currentHealth - amount, 0)
+	updateBars()
+	-- Ölümler vs buraya
+end
+local toolInHand = nil
+local inventory = {}
+
+local mouse = player:GetMouse()
+
+-- Meyve al (örnek tetikleme fonksiyonu)
+function pickupFruit(fruit)
+	table.insert(inventory, fruit)
+	fruit.Parent = nil -- Meyve dünyadan kaldırıldı
+end
+
+-- Sağ tık = yeme (kullan)
+mouse.Button2Down:Connect(function()
+	if toolInHand then
+		print("Meyve yendi: "..toolInHand.Name)
+		-- Güç açma kodu buraya
+		toolInHand = nil
+	end
+end)
+
+-- Sol tık = envantere koy
+mouse.Button1Down:Connect(function()
+	if toolInHand then
+		table.insert(inventory, toolInHand)
+		print("Meyve envantere eklendi: "..toolInHand.Name)
+		toolInHand = nil
+	end
+end)
+
+-- Envanterden meyve seç, eline al
+function equipFruitFromInventory(index)
+	if inventory[index] then
+		toolInHand = inventory[index]
+		table.remove(inventory, index)
+		print("Eline meyve alındı: "..toolInHand.Name)
+	end
+end
+local inventoryGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+inventoryGui.Enabled = false
+
+local button = Instance.new("TextButton", inventoryGui)
+button.Text = "Inventory"
+button.Position = UDim2.new(0, 10, 0.8, 0)
+button.Size = UDim2.new(0, 100, 0, 40)
+
+local frame = Instance.new("Frame", inventoryGui)
+frame.Position = UDim2.new(0, 10, 0.6, 0)
+frame.Size = UDim2.new(0, 200, 0, 150)
+frame.BackgroundColor3 = Color3.new(0,0,0)
+frame.Visible = false
+
+button.MouseButton1Click:Connect(function()
+	frame.Visible = not frame.Visible
+	inventoryGui.Enabled = frame.Visible
+	-- Envanterdeki meyveleri listele
+	for i,v in pairs(frame:GetChildren()) do
+		if v:IsA("TextButton") then
+			v:Destroy()
+		end
+	end
+	for i, fruit in ipairs(inventory) do
+		local fruitButton = Instance.new("TextButton", frame)
+		fruitButton.Size = UDim2.new(1, -10, 0, 30)
+		fruitButton.Position = UDim2.new(0, 5, 0, (i-1)*35 + 5)
+		fruitButton.Text = fruit.Name
+		fruitButton.MouseButton1Click:Connect(function()
+			equipFruitFromInventory(i)
+		end)
+	end
+end)
+function setupBossGui(boss)
+	local head = boss:WaitForChild("Head")
+	local billboard = Instance.new("BillboardGui", boss)
+	billboard.Adornee = head
+	billboard.Size = UDim2.new(0, 200, 0, 50)
+	billboard.StudsOffset = Vector3.new(0, 3, 0)
+	billboard.AlwaysOnTop = true
+
+	local textLabel = Instance.new("TextLabel", billboard)
+	textLabel.Size = UDim2.new(1,0,0.5,0)
+	textLabel.BackgroundTransparency = 1
+	textLabel.TextColor3 = Color3.new(1, 0, 0)
+	textLabel.TextStrokeTransparency = 0
+	textLabel.Font = Enum.Font.SourceSansBold
+	textLabel.TextSize = 24
+	textLabel.Text = boss.Name .. " Boss"
+
+	local healthBarBg = Instance.new("Frame", billboard)
+	healthBarBg.Position = UDim2.new(0,0,0.5,0)
+	healthBarBg.Size = UDim2.new(1,0,0.3,0)
+	healthBarBg.BackgroundColor3 = Color3.new(0.3,0,0)
+
+	local healthBar = Instance.new("Frame", healthBarBg)
+	healthBar.Size = UDim2.new(1,0,1,0)
+	healthBar.BackgroundColor3 = Color3.new(1,0,0)
+
+	-- Can güncelleme fonksiyonu buraya
+end
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local ScreenGui = Instance.new("ScreenGui", playerGui)
+ScreenGui.Name = "HealthEnergyGui"
+
+-- Can ve enerji barlarının arka plan ve doluluk kısımları
+local healthBarBg = Instance.new("Frame", ScreenGui)
+healthBarBg.Position = UDim2.new(0.8, 0, 0.05, 0)
+healthBarBg.Size = UDim2.new(0.18, 0, 0.03, 0)
+healthBarBg.BackgroundColor3 = Color3.new(0.3, 0, 0)
+
+local healthBar = Instance.new("Frame", healthBarBg)
+healthBar.Size = UDim2.new(1, 0, 1, 0)
+healthBar.BackgroundColor3 = Color3.new(1, 0, 0)
+
+local energyBarBg = Instance.new("Frame", ScreenGui)
+energyBarBg.Position = UDim2.new(0.8, 0, 0.1, 0)
+energyBarBg.Size = UDim2.new(0.18, 0, 0.03, 0)
+energyBarBg.BackgroundColor3 = Color3.new(0, 0, 0.3)
+
+local energyBar = Instance.new("Frame", energyBarBg)
+energyBar.Size = UDim2.new(1, 0, 1, 0)
+energyBar.BackgroundColor3 = Color3.new(0, 0, 1)
+
+local maxHealth = 1000
+local maxEnergy = 500
+local currentHealth = maxHealth
+local currentEnergy = maxEnergy
+
+-- Sağlıklı ve enerjiyi güncelleyen fonksiyon
+local function updateBars()
+	healthBar.Size = UDim2.new(currentHealth / maxHealth, 0, 1, 0)
+	energyBar.Size = UDim2.new(currentEnergy / maxEnergy, 0, 1, 0)
+end
+
+updateBars()
+
+-- Burada, kendi karakterinin sağlığı ve enerjisi değiştikçe
+-- currentHealth ve currentEnergy güncellenmeli.
+
+-- Örnek: Sağlığı Humanoid’den al
+local function onHealthChanged(newHealth)
+	currentHealth = newHealth
+	updateBars()
+end
+
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+humanoid.HealthChanged:Connect(onHealthChanged)
+
+-- Enerji için kendi sistemine göre benzer bağlantı yapmalısın
+-- Örnek: enerji değiştiğinde currentEnergy güncelle ve updateBars() çağır
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:WaitForChild("HumanoidRootPart")
+local speed = 16 -- hareket hızı
+
+local moveDirection = Vector3.new(0,0,0)
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+
+	if input.KeyCode == Enum.KeyCode.W then
+		moveDirection = moveDirection + Vector3.new(0,0,-1)
+	elseif input.KeyCode == Enum.KeyCode.S then
+		moveDirection = moveDirection + Vector3.new(0,0,1)
+	elseif input.KeyCode == Enum.KeyCode.A then
+		moveDirection = moveDirection + Vector3.new(-1,0,0)
+	elseif input.KeyCode == Enum.KeyCode.D then
+		moveDirection = moveDirection + Vector3.new(1,0,0)
+	end
+end)
+
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+
+	if input.KeyCode == Enum.KeyCode.W then
+		moveDirection = moveDirection - Vector3.new(0,0,-1)
+	elseif input.KeyCode == Enum.KeyCode.S then
+		moveDirection = moveDirection - Vector3.new(0,0,1)
+	elseif input.KeyCode == Enum.KeyCode.A then
+		moveDirection = moveDirection - Vector3.new(-1,0,0)
+	elseif input.KeyCode == Enum.KeyCode.D then
+		moveDirection = moveDirection - Vector3.new(1,0,0)
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if moveDirection.Magnitude > 0 then
+		moveDirection = moveDirection.Unit
+		local newCFrame = hrp.CFrame + moveDirection * speed * RunService.RenderStepped:Wait()
+		hrp.CFrame = CFrame.new(newCFrame.Position.X, hrp.Position.Y, newCFrame.Position.Z)
+	end
+end)
+local UserInputService = game:GetService("UserInputService")
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local humanoid = character:WaitForChild("Humanoid")
+
+-- Zıplama efekti (örnek: küçük bir ışık patlaması)
+local function playJumpEffect()
+	local head = character:FindFirstChild("Head")
+	if not head then return end
+
+	local particle = Instance.new("ParticleEmitter")
+	particle.Texture = "rbxassetid://243660364" -- örnek parlak küçük efekt
+	particle.Rate = 100
+	particle.Lifetime = NumberRange.new(0.3)
+	particle.Speed = NumberRange.new(5)
+	particle.Parent = head
+
+	game:GetService("Debris"):AddItem(particle, 0.5)
+end
+
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+	if gameProcessed then return end
+
+	if input.KeyCode == Enum.KeyCode.Space then
+		if humanoid and humanoid:GetState() ~= Enum.HumanoidStateType.Jumping and humanoid:GetState() ~= Enum.HumanoidStateType.Freefall then
+			humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+			playJumpEffect()
+		end
+	end
+end)
+local playerData = {} -- oyuncunun veri yapısı
+
+-- Oyuncu giriş yaptığında ya da karakter spawn olduğunda
+local function giveFreeJumpAbility()
+	playerData.jump = true -- zıplama yeteneği aktif
+	-- Oyuncu parası kontrol edilmeden direkt verilmiş oluyor
+	print("Zıplama yeteneği ücretsiz verildi!")
+end
+
+giveFreeJumpAbility()
+-- Gacha GUI Oluştur
+local player = game.Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+local gachaGui = Instance.new("ScreenGui", playerGui)
+gachaGui.Name = "GachaGui"
+
+local gachaButton = Instance.new("TextButton", gachaGui)
+gachaButton.Text = "Gacha Roll (5000$)"
+gachaButton.Size = UDim2.new(0, 200, 0, 50)
+gachaButton.Position = UDim2.new(0, 20, 0.7, 0)
+gachaButton.BackgroundColor3 = Color3.fromRGB(100, 100, 255)
+gachaButton.TextColor3 = Color3.new(1, 1, 1)
+gachaButton.Font = Enum.Font.SourceSansBold
+gachaButton.TextSize = 20
+
+-- Gacha isteğini sunucuya gönder
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local gachaEvent = ReplicatedStorage:WaitForChild("GachaRoll")
+
+gachaButton.MouseButton1Click:Connect(function()
+	gachaEvent:FireServer()
+end)
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local gachaEvent = ReplicatedStorage:WaitForChild("GachaRoll")
+
+-- Örnek meyveler ve oranları
+local fruits = {
+	{ name = "Phoenix", rarity = 5 },
+	{ name = "Light", rarity = 30 },
+	{ name = "Flame", rarity = 30 },
+	{ name = "Rubber", rarity = 35 }
+}
+
+-- Rarity'ye göre meyve seç
+local function rollFruit()
+	local totalWeight = 0
+	for _, fruit in ipairs(fruits) do
+		totalWeight += fruit.rarity
+	end
+
+	local random = math.random(1, totalWeight)
+	local sum = 0
+	for _, fruit in ipairs(fruits) do
+		sum += fruit.rarity
+		if random <= sum then
+			return fruit.name
+		end
+	end
+end
+
+-- Oyuncuya meyve ekle (örnek)
+local function giveFruit(player, fruitName)
+	local data = player:FindFirstChild("FruitInventory")
+	if not data then
+		data = Instance.new("Folder", player)
+		data.Name = "FruitInventory"
+	end
+
+	local fruit = Instance.new("StringValue", data)
+	fruit.Name = fruitName
+	fruit.Value = fruitName
+	print(player.Name .. " kazandı: " .. fruitName)
+end
+
+-- Para kontrolü (örnek)
+local function hasEnoughMoney(player, amount)
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if leaderstats and leaderstats:FindFirstChild("Coins") then
+		return leaderstats.Coins.Value >= amount
+	end
+	return false
+end
+
+local function takeMoney(player, amount)
+	local leaderstats = player:FindFirstChild("leaderstats")
+	if leaderstats and leaderstats:FindFirstChild("Coins") then
+		leaderstats.Coins.Value -= amount
+	end
+end
+
+-- Gacha event
+gachaEvent.OnServerEvent:Connect(function(player)
+	local cost = 5000
+	if hasEnoughMoney(player, cost) then
+		takeMoney(player, cost)
+		local fruit = rollFruit()
+		giveFruit(player, fruit)
+		-- GUI'de bildirim gösterme eklenebilir
+	else
+		warn(player.Name .. " yetersiz para ile Gacha çekmeye çalıştı.")
+	end
+end)
+-- %5 şansla Phoenix (nadir)
+-- %30 Light, %30 Flame, %35 Rubber
+
