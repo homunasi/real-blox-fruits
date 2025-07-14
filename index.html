@@ -1531,3 +1531,238 @@ end)
 -- %5 şansla Phoenix (nadir)
 -- %30 Light, %30 Flame, %35 Rubber
 
+function onBossDefeated(player)
+	local rewardMoney = 2500
+	local rewardXP = 100
+
+	-- PARA VER
+	local stats = player:FindFirstChild("leaderstats")
+	if stats and stats:FindFirstChild("Coins") then
+		stats.Coins.Value += rewardMoney
+	end
+
+	-- XP VER
+	local data = player:FindFirstChild("PlayerData")
+	if data and data:FindFirstChild("XP") then
+		data.XP.Value += rewardXP
+	end
+
+	-- BOSS düşüş meyvesi yok artık
+	print(player.Name .. " bossu yendi! +" .. rewardMoney .. " para, +" .. rewardXP .. " XP")
+end
+boss.Humanoid.Died:Connect(function()
+	onBossDefeated(lastHitPlayer)
+end)
+local phoenixBoss = script.Parent  -- boss model
+local humanoid = phoenixBoss:WaitForChild("Humanoid")
+local hrp = phoenixBoss:WaitForChild("HumanoidRootPart")
+
+-- Phoenix Boss Ayarları
+humanoid.MaxHealth = 8000
+humanoid.Health = 8000
+humanoid.WalkSpeed = 18
+
+-- Özel saldırı örneği: mavi alev fırlatma
+local function fireBlueFlame(target)
+	local flame = Instance.new("Part")
+	flame.Size = Vector3.new(2, 2, 2)
+	flame.BrickColor = BrickColor.new("Bright blue")
+	flame.Material = Enum.Material.Neon
+	flame.Anchored = false
+	flame.CanCollide = false
+	flame.CFrame = hrp.CFrame
+	flame.Velocity = (target.Position - hrp.Position).Unit * 80
+	flame.Parent = workspace
+
+	local fireTouch = flame.Touched:Connect(function(hit)
+		local hum = hit.Parent:FindFirstChild("Humanoid")
+		if hum and hit.Parent ~= phoenixBoss then
+			hum:TakeDamage(35)
+			fireTouch:Disconnect()
+			flame:Destroy()
+		end
+	end)
+
+	game.Debris:AddItem(flame, 5)
+end
+
+-- Otomatik saldırı
+local attacking = true
+
+spawn(function()
+	while attacking and humanoid.Health > 0 do
+		wait(2)
+		local target = findNearestPlayer(hrp.Position, 60)
+		if target then
+			fireBlueFlame(target)
+		end
+	end
+end)
+
+-- En yakın oyuncuyu bul
+function findNearestPlayer(position, range)
+	local closest = nil
+	local shortest = range
+	for _, plr in pairs(game.Players:GetPlayers()) do
+		local char = plr.Character
+		if char and char:FindFirstChild("HumanoidRootPart") and plr.Team ~= phoenixBoss.Team then
+			local dist = (char.HumanoidRootPart.Position - position).Magnitude
+			if dist < shortest then
+				shortest = dist
+				closest = char.HumanoidRootPart
+			end
+		end
+	end
+	return closest
+end
+Phoenix Boss (Legendary)
+HP: 8000
+local forestIsland = Instance.new("Model")
+forestIsland.Name = "ForestIsland"
+
+-- Zemin
+local ground = Instance.new("Part", forestIsland)
+ground.Name = "Ground"
+ground.Size = Vector3.new(200, 5, 200)
+ground.Position = Vector3.new(0, 0, 0)
+ground.Anchored = true
+ground.BrickColor = BrickColor.new("Bright green")
+ground.Material = Enum.Material.Grass
+
+-- Ağaçlar (örnek olarak 5 tane)
+for i = 1, 5 do
+	local tree = Instance.new("Part", forestIsland)
+	tree.Size = Vector3.new(2, 10, 2)
+	tree.Anchored = true
+	tree.Position = Vector3.new(math.random(-80, 80), 5, math.random(-80, 80))
+	tree.BrickColor = BrickColor.new("Brown")
+
+	local leaves = Instance.new("Part", forestIsland)
+	leaves.Size = Vector3.new(6, 6, 6)
+	leaves.Shape = Enum.PartType.Ball
+	leaves.Anchored = true
+	leaves.Position = tree.Position + Vector3.new(0, 7, 0)
+	leaves.BrickColor = BrickColor.new("Bright green")
+end
+
+forestIsland.Parent = workspace
+local desertIsland = Instance.new("Model")
+desertIsland.Name = "DesertIsland"
+
+local ground = Instance.new("Part", desertIsland)
+ground.Size = Vector3.new(150, 5, 150)
+ground.Position = Vector3.new(300, 0, 0)
+ground.Anchored = true
+ground.BrickColor = BrickColor.new("Brick yellow")
+ground.Material = Enum.Material.Sand
+
+-- Yapılar
+for i = 1, 3 do
+	local pillar = Instance.new("Part", desertIsland)
+	pillar.Size = Vector3.new(4, 20, 4)
+	pillar.Position = Vector3.new(280 + i * 10, 10, 0)
+	pillar.Anchored = true
+	pillar.BrickColor = BrickColor.new("Dark orange")
+end
+
+desertIsland.Parent = workspace
+local prisonIsland = Instance.new("Model")
+prisonIsland.Name = "PrisonIsland"
+
+local ground = Instance.new("Part", prisonIsland)
+ground.Size = Vector3.new(180, 5, 180)
+ground.Position = Vector3.new(-300, 0, 0)
+ground.Anchored = true
+ground.BrickColor = BrickColor.new("Dark stone grey")
+ground.Material = Enum.Material.Slate
+
+-- Duvarlar
+for i = 1, 4 do
+	local wall = Instance.new("Part", prisonIsland)
+	wall.Size = Vector3.new(180, 20, 2)
+	wall.Anchored = true
+	wall.BrickColor = BrickColor.new("Black")
+	if i == 1 then wall.Position = Vector3.new(-300, 10, -390) -- önden
+	elseif i == 2 then wall.Position = Vector3.new(-300, 10, -210) -- arkadan
+	elseif i == 3 then
+		wall.Size = Vector3.new(2, 20, 180)
+		wall.Position = Vector3.new(-390, 10, -300)
+	elseif i == 4 then
+		wall.Size = Vector3.new(2, 20, 180)
+		wall.Position = Vector3.new(-210, 10, -300)
+	end
+	wall.Parent = prisonIsland
+end
+
+-- Kuleler veya parmaklıklar da eklenebilir
+
+prisonIsland.Parent = workspace
+local ocean = Instance.new("Part")
+ocean.Name = "Ocean"
+ocean.Size = Vector3.new(3000, 20, 3000) -- dev bir alan
+ocean.Position = Vector3.new(0, -10, 0)  -- adaların altına koy
+ocean.Anchored = true
+ocean.Material = Enum.Material.SmoothPlastic
+ocean.BrickColor = BrickColor.new("Bright blue")
+ocean.Transparency = 0.25 -- yarı saydam su efekti
+ocean.Reflectance = 0.2    -- yansıma efekti
+ocean.Parent = workspace
+local ocean = Instance.new("Part")
+ocean.Name = "Ocean"
+ocean.Size = Vector3.new(3000, 20, 3000)
+ocean.Position = Vector3.new(0, -10, 0)
+ocean.Anchored = true
+ocean.BrickColor = BrickColor.new("Bright blue")
+ocean.Material = Enum.Material.SmoothPlastic
+ocean.Transparency = 0.25
+ocean.Reflectance = 0.2
+ocean.CanCollide = true
+ocean.Parent = workspace
+ocean.Touched:Connect(function(hit)
+	local character = hit.Parent
+	if character and character:FindFirstChild("Humanoid") then
+		local player = game.Players:GetPlayerFromCharacter(character)
+		if player then
+			-- Spawn konumuna gönder
+			local spawnLocation = workspace:FindFirstChild("SpawnLocation") or workspace:FindFirstChild("Spawn")
+			if spawnLocation then
+				character:MoveTo(spawnLocation.Position + Vector3.new(0, 5, 0))
+			else
+				-- Yedek: haritadaki bir koordinata gönder
+				character:MoveTo(Vector3.new(0, 5, 0))
+			end
+		end
+	end
+end)
+local gachaNpc = Instance.new("Model")
+gachaNpc.Name = "GachaNPC"
+
+local body = Instance.new("Part", gachaNpc)
+body.Name = "Body"
+body.Size = Vector3.new(2, 6, 2)
+body.Position = Vector3.new(10, 3, 10)
+body.Anchored = true
+body.BrickColor = BrickColor.new("Bright yellow")
+
+local head = Instance.new("Part", gachaNpc)
+head.Name = "Head"
+head.Size = Vector3.new(2, 1, 2)
+head.Position = body.Position + Vector3.new(0, 3.5, 0)
+head.Anchored = true
+head.BrickColor = BrickColor.new("Bright orange")
+
+-- Yazı
+local gui = Instance.new("BillboardGui", head)
+gui.Size = UDim2.new(5, 0, 1, 0)
+gui.StudsOffset = Vector3.new(0, 2, 0)
+gui.AlwaysOnTop = true
+
+local label = Instance.new("TextLabel", gui)
+label.Size = UDim2.new(1, 0, 1, 0)
+label.BackgroundTransparency = 1
+label.Text = "🍉 Gacha NPC\n5000$ → Rastgele Meyve"
+label.TextColor3 = Color3.new(1, 1, 0)
+label.TextScaled = true
+label.Font = Enum.Font.SourceSansBold
+
+gachaNpc.Parent = workspace
