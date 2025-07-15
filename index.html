@@ -1761,8 +1761,144 @@ local label = Instance.new("TextLabel", gui)
 label.Size = UDim2.new(1, 0, 1, 0)
 label.BackgroundTransparency = 1
 label.Text = "🍉 Gacha NPC\n5000$ → Rastgele Meyve"
-label.TextColor3 = Color3.new(1, 1, 0)
-label.TextScaled = true
-label.Font = Enum.Font.SourceSansBold
+label.TextColor3 = Color3.new(1, 1, 0)function isSkillUnlocked(skillKey, player)
+	if table.find(adminUserIds, player.UserId) then
+		return true -- Admin her yeteneğe erişir
+	endlocal rubberBoss = Instance.new("Model")
+rubberBoss.Name = "RubberBoss"
 
-gachaNpc.Parent = workspace
+local body = Instance.new("Part", rubberBoss)
+body.Size = Vector3.new(3, 6, 3)
+body.Position = Vector3.new(50, 3, 20)
+body.Anchored = true
+body.BrickColor = BrickColor.new("Bright red")
+
+local head = Instance.new("Part", rubberBoss)
+head.Size = Vector3.new(3, 2, 3)
+head.Position = body.Position + Vector3.new(0, 4, 0)
+head.Anchored = true
+head.BrickColor = BrickColor.new("Really black")
+
+local nameGui = Instance.new("BillboardGui", head)
+nameGui.Size = UDim2.new(6, 0, 1, 0)
+nameGui.StudsOffset = Vector3.new(0, 2, 0)
+nameGui.AlwaysOnTop = true
+
+local label = Instance.new("TextLabel", nameGui)
+label.Size = UDim2.new(1, 0, 1, 0)
+label.Text = "💥 Rubber Boss (Rare)"
+label.TextColor3 = Color3.new(1, 0.2, 0.2)
+label.BackgroundTransparency = 1
+label.TextScaled = true
+
+rubberBoss.Parent = workspace
+flameBoss:SetPrimaryPartCFrame(CFrame.new(300, 3, 30)) -- çöl bölgesi
+flameBoss.Name = "🔥 Flame Boss (Rare)"
+phoenixBoss:SetPrimaryPartCFrame(CFrame.new(-300, 3, 20)) -- hapishane
+phoenixBoss.Name = "🕊️ Phoenix Boss (Legendary)"
+local lightBoss = Instance.new("Model")
+lightBoss.Name = "💡 Light Boss (Rare)"
+
+local body = Instance.new("Part", lightBoss)
+body.Size = Vector3.new(3, 6, 3)
+body.Position = Vector3.new(-250, 3, 80) -- Phoenix'ten uzak
+body.Anchored = true
+body.BrickColor = BrickColor.new("Institutional white")
+
+local head = Instance.new("Part", lightBoss)
+head.Size = Vector3.new(3, 2, 3)
+head.Position = body.Position + Vector3.new(0, 4, 0)
+head.Anchored = true
+head.BrickColor = BrickColor.new("New Yeller")
+
+local gui = Instance.new("BillboardGui", head)
+gui.Size = UDim2.new(6, 0, 1, 0)
+gui.StudsOffset = Vector3.new(0, 2, 0)
+gui.AlwaysOnTop = true
+
+local label = Instance.new("TextLabel", gui)
+label.Size = UDim2.new(1, 0, 1, 0)
+label.Text = "💡 Light Boss (Rare)"
+label.TextColor3 = Color3.new(1, 1, 0.6)
+label.BackgroundTransparency = 1
+label.TextScaled = true
+
+lightBoss.Parent = workspace
+-- Tekne NPC
+local boatNpc = Instance.new("Model", workspace)
+boatNpc.Name = "BoatSeller"
+
+local body = Instance.new("Part", boatNpc)
+body.Size = Vector3.new(2, 6, 2)
+body.Position = Vector3.new(0, 3, -100) -- orman limanına yakın
+body.Anchored = true
+body.BrickColor = BrickColor.new("Brown")
+
+local labelGui = Instance.new("BillboardGui", body)
+labelGui.Size = UDim2.new(5, 0, 1, 0)
+labelGui.StudsOffset = Vector3.new(0, 2, 0)
+labelGui.AlwaysOnTop = true
+
+local text = Instance.new("TextLabel", labelGui)
+text.Size = UDim2.new(1, 0, 1, 0)
+text.Text = "🛥️ Tekne NPC"
+text.TextColor3 = Color3.new(1, 1, 1)
+text.BackgroundTransparency = 1
+text.TextScaled = true
+
+-- Tıklama sistemi için ClickDetector ve tekne spawn kodu eklenecek
+local questNpc = Instance.new("Model", workspace)
+questNpc.Name = "BanditQuestNPC"
+
+local body = Instance.new("Part", questNpc)
+body.Size = Vector3.new(2, 6, 2)
+body.Position = Vector3.new(-20, 3, 20)
+body.Anchored = true
+body.BrickColor = BrickColor.new("Bright blue")
+
+local gui = Instance.new("BillboardGui", body)
+gui.Size = UDim2.new(5, 0, 1, 0)
+gui.StudsOffset = Vector3.new(0, 2, 0)
+gui.AlwaysOnTop = true
+
+local label = Instance.new("TextLabel", gui)
+label.Size = UDim2.new(1, 0, 1, 0)
+label.Text = "📝 Lv. 0 Bandit Görevi\nÖldür: x5 Bandit\nÖdül: 350 Coin"
+label.TextColor3 = Color3.fromRGB(255, 255, 150)
+label.BackgroundTransparency = 1
+label.TextScaled = true
+label.Text = "🎲 GACHA"
+label.TextColor3 = Color3.new(1, 0.8, 0.2)
+const nameRegistry = {};  // { "ahmet": true, "ayşe": true, ... }
+
+function askPlayerName() {
+    let playerName = prompt("İsmini gir (Bu ismi sadece 1 kişi alabilir):");
+
+    if (!playerName) return;
+    playerName = playerName.trim();
+
+    let key = playerName.toLowerCase(); // Küçük-büyük harf farkını önler
+
+    if (nameRegistry[key]) {
+        alert("❌ Bu isim zaten alındı. Lütfen başka bir isim gir.");
+        askPlayerName(); // Yeniden denesin
+    } else {
+        nameRegistry[key] = true; // İsmi rezerve et
+        alert("✅ İsmin kabul edildi: " + playerName);
+        startGameWithName(playerName); // Oyunu başlat
+    }
+}
+
+function startGameWithName(name) {
+    // Oyuncunun ismini göster
+    const nameTag = document.createElement("div");
+    nameTag.textContent = name;
+    nameTag.style.position = "absolute";
+    nameTag.style.top = "10px";
+    nameTag.style.left = "10px";
+    nameTag.style.color = "white";
+    nameTag.style.fontSize = "20px";
+    document.body.appendChild(nameTag);
+
+    // Buraya karakter oluşturma veya oyun başlatma kodu eklenebilir
+}
